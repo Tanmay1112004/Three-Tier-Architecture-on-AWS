@@ -2,7 +2,7 @@ aws_region = "us-east-1"
 
 # EC2 instances clone this repository to install the Campus Help Desk Portal.
 app_repo_url = "https://github.com/Tanmay1112004/Three-Tier-Architecture-on-AWS.git"
-app_release  = "v3"
+app_release  = "v4"
 
 # Set a unique value if you deploy more than one copy in the same AWS account.
 project_name = "hello-world-three-tier"

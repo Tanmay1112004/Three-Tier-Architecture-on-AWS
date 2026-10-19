@@ -65,6 +65,31 @@
                     <span id="request-count" class="request-count" aria-live="polite">Loading…</span>
                     <button id="refresh-button" class="refresh-button" type="button" aria-label="Refresh requests">↻</button>
                 </div>
+                <div class="request-summary" aria-label="Status counts for recent requests">
+                    <div class="summary-item"><span id="open-count">0</span><span>Open</span></div>
+                    <div class="summary-item"><span id="progress-count">0</span><span>In progress</span></div>
+                    <div class="summary-item"><span id="resolved-count">0</span><span>Resolved</span></div>
+                </div>
+                <div class="request-filters" aria-label="Filter requests">
+                    <label class="visually-hidden" for="search-requests">Search requests</label>
+                    <input id="search-requests" type="search" placeholder="Search requests…" autocomplete="off">
+                    <label class="visually-hidden" for="filter-category">Filter by category</label>
+                    <select id="filter-category">
+                        <option value="">All categories</option>
+                        <option value="Technology">Technology</option>
+                        <option value="Facilities">Facilities</option>
+                        <option value="Student Services">Student Services</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <label class="visually-hidden" for="filter-status">Filter by status</label>
+                    <select id="filter-status">
+                        <option value="">All statuses</option>
+                        <option value="Open">Open</option>
+                        <option value="In progress">In progress</option>
+                        <option value="Resolved">Resolved</option>
+                    </select>
+                    <button id="clear-filters" class="clear-filters" type="button" hidden>Clear</button>
+                </div>
                 <div id="request-list" class="request-list" aria-live="polite">
                     <p class="empty-state">Loading requests…</p>
                 </div>

@@ -75,6 +75,6 @@ variable "app_repo_url" {
 variable "app_release" {
   description = "Release label changed for each app deployment so Auto Scaling refreshes instances."
   type        = string
-  default     = "v3"
+  default     = "v4"
 }
 

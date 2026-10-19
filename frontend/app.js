@@ -4,6 +4,16 @@ const formStatus = document.getElementById('form-status');
 const submitButton = document.getElementById('submit-button');
 const requestCount = document.getElementById('request-count');
 const refreshButton = document.getElementById('refresh-button');
+const searchInput = document.getElementById('search-requests');
+const categoryFilter = document.getElementById('filter-category');
+const statusFilter = document.getElementById('filter-status');
+const clearFiltersButton = document.getElementById('clear-filters');
+const statusCounts = {
+    open: document.getElementById('open-count'),
+    progress: document.getElementById('progress-count'),
+    resolved: document.getElementById('resolved-count')
+};
+let allRequests = [];
 
 async function loadRequests() {
     requestList.replaceChildren(makeMessage('Loading requests…'));
@@ -18,23 +28,56 @@ async function loadRequests() {
             throw new Error(result.error || 'Could not load requests.');
         }
 
-        if (result.requests.length === 0) {
-            requestCount.textContent = '0 requests';
-            requestList.replaceChildren(makeMessage('No requests yet. Submit the first one.'));
-            return;
-        }
-
-        requestCount.textContent = `${result.requests.length} ${result.requests.length === 1 ? 'request' : 'requests'}`;
-        const cards = result.requests.map(makeRequestCard);
-        requestList.replaceChildren(...cards);
+        allRequests = result.requests;
+        renderRequests();
     } catch (error) {
+        allRequests = [];
         requestCount.textContent = 'Unavailable';
+        updateStatusCounts([]);
         requestList.replaceChildren(makeMessage('Requests are temporarily unavailable. Please refresh in a moment.', 'error-state'));
         console.error(error);
     } finally {
         refreshButton.disabled = false;
         refreshButton.classList.remove('is-loading');
     }
+}
+
+function renderRequests() {
+    const query = searchInput.value.trim().toLocaleLowerCase();
+    const category = categoryFilter.value;
+    const status = statusFilter.value;
+    const filteredRequests = allRequests.filter((request) => {
+        const searchableText = `${request.title} ${request.description} ${request.category}`.toLocaleLowerCase();
+        return (!query || searchableText.includes(query))
+            && (!category || request.category === category)
+            && (!status || request.status === status);
+    });
+
+    updateStatusCounts(allRequests);
+    clearFiltersButton.hidden = !query && !category && !status;
+
+    if (allRequests.length === 0) {
+        requestCount.textContent = '0 requests';
+        requestList.replaceChildren(makeMessage('No requests yet. Submit the first one.'));
+        return;
+    }
+
+    requestCount.textContent = filteredRequests.length === allRequests.length
+        ? `${allRequests.length} ${allRequests.length === 1 ? 'request' : 'requests'}`
+        : `${filteredRequests.length} of ${allRequests.length} shown`;
+
+    if (filteredRequests.length === 0) {
+        requestList.replaceChildren(makeMessage('No requests match these filters. Try a different search.'));
+        return;
+    }
+
+    requestList.replaceChildren(...filteredRequests.map(makeRequestCard));
+}
+
+function updateStatusCounts(requests) {
+    statusCounts.open.textContent = requests.filter((request) => request.status === 'Open').length;
+    statusCounts.progress.textContent = requests.filter((request) => request.status === 'In progress').length;
+    statusCounts.resolved.textContent = requests.filter((request) => request.status === 'Resolved').length;
 }
 
 function makeRequestCard(request) {
@@ -121,4 +164,14 @@ requestForm.addEventListener('submit', async (event) => {
 });
 
 refreshButton.addEventListener('click', loadRequests);
+searchInput.addEventListener('input', renderRequests);
+categoryFilter.addEventListener('change', renderRequests);
+statusFilter.addEventListener('change', renderRequests);
+clearFiltersButton.addEventListener('click', () => {
+    searchInput.value = '';
+    categoryFilter.value = '';
+    statusFilter.value = '';
+    renderRequests();
+    searchInput.focus();
+});
 loadRequests();
