@@ -28,7 +28,7 @@ git commit -m "Build campus help desk portfolio app"
 git push origin main
 ```
 
-If you cannot push to the configured repository, create a public GitHub fork and set `app_repo_url` in `infrastructure\terraform\terraform.tfvars` to your fork URL.
+The Terraform defaults point to this repository. Keep it public so EC2 can clone it at startup. If you deploy from a different public repository, set `app_repo_url` in `infrastructure\terraform\terraform.tfvars` to that repository's URL.
 
 ## Review and apply Terraform
 
@@ -44,10 +44,10 @@ if (-not (Test-Path .\terraform.tfvars)) {
 Open `terraform.tfvars`. Confirm the repository URL and set a new `app_release` label, such as `v2`. Changing that label creates a new launch-template version and refreshes the EC2 instances so they download the published app files.
 
 ```hcl
-aws_region  = "us-east-1"
+aws_region = "us-east-1"
 project_name = "hello-world-three-tier"
 environment = "demo"
-app_repo_url = "https://github.com/YOUR-NAME/three-tier-architecture-aws.git"
+app_repo_url = "https://github.com/Tanmay1112004/Three-Tier-Architecture-on-AWS.git"
 app_release = "v2"
 ```
 

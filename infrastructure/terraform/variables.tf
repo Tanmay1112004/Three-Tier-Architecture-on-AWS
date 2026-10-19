@@ -69,12 +69,12 @@ variable "db_allocated_storage" {
 variable "app_repo_url" {
   description = "Public Git URL cloned by EC2 user data at instance launch."
   type        = string
-  default     = "https://github.com/ajitinamdar-tech/three-tier-architecture-aws.git"
+  default     = "https://github.com/Tanmay1112004/Three-Tier-Architecture-on-AWS.git"
 }
 
 variable "app_release" {
   description = "Release label changed for each app deployment so Auto Scaling refreshes instances."
   type        = string
-  default     = "v1"
+  default     = "v2"
 }
 
