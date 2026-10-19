@@ -1,74 +1,138 @@
-# Three-Tier Architecture on AWS
+# Campus Help Desk on AWS
 
-A beginner-friendly AWS portfolio project. The application is a small **Campus Help Desk Portal** where a student can submit a support request and see recent requests. The main project is the AWS architecture and Terraform deployment; the application stays intentionally simple so the infrastructure is easy to explain in an interview.
+A beginner cloud project that demonstrates how a small web app can run on AWS with separate frontend, backend, and database tiers. Students can submit campus support requests and browse recent requests.
+
+**Built with:** AWS, Terraform, Nginx, PHP, JavaScript, and MySQL.
+
+- [Open the demo](http://hello-world-three-tier-web-1347202854.us-east-1.elb.amazonaws.com)
+- [View the GitHub repository](https://github.com/Tanmay1112004/Three-Tier-Architecture-on-AWS)
+
+> This is a learning demo. Requests are visible to visitors, the site uses HTTP, and it has no sign-in. Use sample data only—do not enter personal or confidential information.
+
+## What the app does
+
+- Submit a request with a title, category, and description.
+- Save requests in a MySQL database.
+- Browse up to 20 recent requests, with search and category/status filters.
+- See request counts grouped by status.
+
+New requests start with **Open** status. Staff sign-in and changing request statuses are not implemented yet.
+
+## How it works
 
 ![Three-tier AWS architecture](aws-three-tier-architecture.png)
 
-## What the application does
-
-- Displays recent campus support requests.
-- Accepts a title, category, and short description.
-- Saves each request with an `Open` status and submission time.
-- Shows a simple success or error message.
-
-The demo has no login or staff workflow. Use sample information only; do not submit personal or confidential data.
-
-## Architecture
-
-1. A public Application Load Balancer receives browser traffic.
-2. Nginx on private frontend EC2 instances serves the page and forwards `/api/` requests to an internal backend load balancer.
-3. PHP on private backend EC2 instances validates requests and reads/writes records in private Amazon RDS for MySQL.
-4. Backend instances read database credentials from AWS Secrets Manager using an EC2 IAM role.
-
-Terraform creates the VPC, subnets, route tables, Internet Gateway, one NAT Gateway, security groups, load balancers, launch templates, Auto Scaling groups, and Multi-AZ RDS database. See [Architecture notes](docs/ARCHITECTURE.md) for the request flow and design choices.
-
-## Folder structure
-
 ```text
-three-tier-architecture-aws/
-├── backend/api/                 # PHP request, health-check, and database code
-├── database/                    # MySQL table and demo seed data
-├── docs/                        # Architecture and beginner interview notes
-├── frontend/                    # HTML, CSS, and browser JavaScript
-├── infrastructure/terraform/    # AWS infrastructure and deployment guide
-└── aws-three-tier-architecture.png
+Browser
+  │
+  ▼
+Public Application Load Balancer
+  │
+  ▼
+Private Nginx frontend (EC2)
+  │  /api requests
+  ▼
+Internal Application Load Balancer
+  │
+  ▼
+Private PHP backend (EC2)
+  │
+  ▼
+Private Amazon RDS for MySQL
 ```
 
-## Deploy to AWS
+1. The browser opens the site through the public load balancer.
+2. Nginx serves the page and forwards API requests to the internal load balancer.
+3. PHP validates requests and reads or writes data in RDS.
+4. The backend gets database credentials from Secrets Manager using its IAM role.
 
-Follow [the PowerShell deployment guide](infrastructure/terraform/DEPLOYMENT.md). It covers AWS credentials, Terraform commands, app releases, checking the site, and destroying the demo stack.
+Security groups control which tier can connect to the next. RDS is private and is not open to internet traffic.
+
+## AWS services used
+
+| Service | What it does in this project |
+| --- | --- |
+| VPC and subnets | Separate the public entry point, web servers, application servers, and database network. |
+| Application Load Balancer | Routes browser traffic to the frontend and API traffic to the backend. |
+| EC2 and Auto Scaling | Run the Nginx and PHP application tiers. |
+| RDS for MySQL | Store help desk requests. |
+| IAM and Secrets Manager | Allow backend instances to retrieve database credentials. |
+| Terraform | Create and update the AWS infrastructure from code. |
+
+## Run the project on AWS
+
+### Prerequisites
+
+- An AWS account and AWS CLI.
+- Terraform 1.6 or newer.
+- A public GitHub repository that EC2 can clone.
+
+### Deploy
+
+Open PowerShell in the project folder:
+
+```powershell
+cd infrastructure/terraform
+Copy-Item terraform.tfvars.example terraform.tfvars
+```
+
+Review `terraform.tfvars`. Confirm the AWS region and repository URL, then check your AWS identity and review the Terraform plan:
+
+```powershell
+aws sts get-caller-identity
+terraform init
+terraform plan
+```
+
+If the plan looks right, create the resources:
+
+```powershell
+terraform apply
+terraform output application_url
+```
+
+Wait for the load balancer targets to become healthy, then open the application URL. For app updates, change `app_release` in `terraform.tfvars` so Terraform refreshes the EC2 instances.
+
+See the [deployment guide](infrastructure/terraform/DEPLOYMENT.md) for more detail.
+
+### Clean up AWS resources
+
+AWS resources in this project can incur charges, especially the NAT Gateway, load balancers, EC2, and RDS. When you finish the demo, review and run:
+
+```powershell
+terraform destroy
+```
+
+This deletes the database too. Export any data you want to keep first.
 
 ## Run locally
 
-Install XAMPP, start Apache and MySQL from the XAMPP Control Panel, and import `database/database_setup.sql` using phpMyAdmin. In PowerShell, run the following from the project root (change the XAMPP path if needed):
+For local development, use XAMPP with Apache, PHP, and MySQL. Import `database/database_setup.sql`, copy the `frontend` files into your local web root and the `backend/api` files into its `api` folder, then configure the database connection for your local MySQL account.
 
-```powershell
-$projectRoot = (Get-Location).Path
-$webRoot = "C:\xampp\htdocs\campus-helpdesk"
-New-Item -ItemType Directory -Force "$webRoot\api" | Out-Null
-Copy-Item "$projectRoot\frontend\*" $webRoot -Recurse -Force
-Copy-Item "$projectRoot\backend\api\*" "$webRoot\api" -Recurse -Force
+Open `http://localhost/campus-helpdesk/` in a browser. See the [interview guide](docs/INTERVIEW_GUIDE.md) for beginner-friendly explanations of the application and its AWS design.
+
+## Project structure
+
+```text
+backend/api/                 PHP API and database connection
+database/                    MySQL schema and sample requests
+docs/                        Architecture and interview notes
+frontend/                    HTML, CSS, and JavaScript
+infrastructure/terraform/    AWS resources and deployment guide
+screenshots/                 Screenshots of the running app
+aws-three-tier-architecture.png
 ```
 
-Create `$webRoot\.htaccess` with the local MySQL settings. The default XAMPP MySQL `root` account often has an empty password; use the password configured on your computer:
+Add your screenshots to `screenshots/` and link them here when they are uploaded.
 
-```powershell
-@'
-SetEnv DB_HOST 127.0.0.1
-SetEnv DB_NAME hello_world
-SetEnv DB_USER root
-SetEnv DB_PASSWORD
-'@ | Set-Content "$webRoot\.htaccess"
-```
+## Resume description
 
-Open `http://localhost/campus-helpdesk/` in a browser. For help answering basic project questions, read the [interview guide](docs/INTERVIEW_GUIDE.md).
+**Campus Help Desk on AWS | Student Project**
 
-The starter configuration runs one `t3.micro` instance in each EC2 tier to fit a small account quota. RDS is Multi-AZ, but the EC2 tiers do not have instance-level failover at this capacity. The stack creates billable resources, including NAT Gateway, load balancers, EC2 instances, and RDS. Run `terraform destroy` when you finish practicing.
+Deployed a PHP and MySQL help desk demo using Terraform and a three-tier AWS architecture. Configured VPC networking, load balancers, EC2 Auto Scaling, private RDS, IAM roles, and Secrets Manager. Practiced troubleshooting API and backend deployment issues.
 
-## How to describe it on a resume
+Describe only the services and work you can explain. This demo uses one EC2 instance per application tier by default, so it does not provide EC2 failover across multiple Availability Zones.
 
-**Three-Tier Architecture on AWS | Student Portfolio Project**
+## Acknowledgements
 
-Designed and deployed a PHP and MySQL help desk demo on AWS using Terraform. Separated the public entry point, frontend, backend, and database into controlled network tiers; used Application Load Balancers, EC2 Auto Scaling groups, private Multi-AZ RDS, security groups, and Secrets Manager.
-
-Use only the services and details you can explain. The [interview guide](docs/INTERVIEW_GUIDE.md) has short explanations and honest limitations for this learning deployment.
+Thanks to **Ajit Sir** for the YouTube explanation of AWS three-tier architecture that helped me understand the design and build this project.
