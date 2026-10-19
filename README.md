@@ -123,7 +123,7 @@ screenshots/                 Screenshots of the running app
 aws-three-tier-architecture.png
 ```
 
-Add your screenshots to `screenshots/` and link them here when they are uploaded.
+AWS console screenshots are available in the [screenshots folder](screenshots/). Add any new app screenshots to the same folder.
 
 ## Resume description
 
