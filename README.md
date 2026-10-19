@@ -1,151 +1,74 @@
-# Hello World Three-Tier Application
+# Three-Tier Architecture on AWS
 
-This repository contains a simple "Hello World" application built using a three-tier architecture. The application demonstrates the fundamental concepts of separating frontend, backend, and database components in a web application.
+A beginner-friendly AWS portfolio project. The application is a small **Campus Help Desk Portal** where a student can submit a support request and see recent requests. The main project is the AWS architecture and Terraform deployment; the application stays intentionally simple so the infrastructure is easy to explain in an interview.
 
-## Architecture Overview
+![Three-tier AWS architecture](aws-three-tier-architecture.png)
 
-![alt text](aws-three-tier-architecture.png)
+## What the application does
 
-The application follows the classic three-tier architecture:
+- Displays recent campus support requests.
+- Accepts a title, category, and short description.
+- Saves each request with an `Open` status and submission time.
+- Shows a simple success or error message.
 
-1. **Frontend Tier (Presentation Layer)**
-   - HTML/CSS/JavaScript
-   - Served by NGINX web servers
-   - Handles user interface and interactions
+The demo has no login or staff workflow. Use sample information only; do not submit personal or confidential data.
 
-2. **Backend Tier (Application Layer)**
-   - PHP API
-   - Processes business logic
-   - Communicates with database
-   - Serves data to frontend
+## Architecture
 
-3. **Database Tier (Data Layer)**
-   - MySQL database
-   - Stores application data
-   - Provides data persistence
+1. A public Application Load Balancer receives browser traffic.
+2. Nginx on private frontend EC2 instances serves the page and forwards `/api/` requests to an internal backend load balancer.
+3. PHP on private backend EC2 instances validates requests and reads/writes records in private Amazon RDS for MySQL.
+4. Backend instances read database credentials from AWS Secrets Manager using an EC2 IAM role.
 
-## Features
+Terraform creates the VPC, subnets, route tables, Internet Gateway, one NAT Gateway, security groups, load balancers, launch templates, Auto Scaling groups, and Multi-AZ RDS database. See [Architecture notes](docs/ARCHITECTURE.md) for the request flow and design choices.
 
-- Display messages from the database
-- Add new messages to the database
-- Basic responsive design
+## Folder structure
 
-## AWS Infrastructure Components
-
-When deployed on AWS, the infrastructure includes:
-
-- **Web ALB**: Load balancer for distributing traffic to web servers
-- **NGINX Servers**: EC2 instances in an auto-scaling group
-- **App ALB**: Load balancer for distributing traffic to application servers
-- **PHP Servers**: EC2 instances in an auto-scaling group
-- **RDS MySQL**: Managed relational database service
-
-## Directory Structure
-
-```
+```text
 three-tier-architecture-aws/
-├── frontend/
-│   ├── index.html            # Main HTML file
-│   ├── styles.css            # CSS styles
-│
-├── backend/
-│   └── api/                  # API endpoints
-│       ├── get_messages.php  # API to retrieve messages
-│       ├── save_message.php  # API to save new messages
-│       └── db_connection.php # Database connection utility
-│
-├── database/
-│   └── database_setup.sql    # SQL schema and initial data
-│
-└── infrastructure/           # AWS infrastructure configurations
-    ├── frontend_server.md     # Frontend server configurations
-    ├── backend_server.md     # Backend server configurations
-    ├── nginx_config     # Nginx server configurations
+├── backend/api/                 # PHP request, health-check, and database code
+├── database/                    # MySQL table and demo seed data
+├── docs/                        # Architecture and beginner interview notes
+├── frontend/                    # HTML, CSS, and browser JavaScript
+├── infrastructure/terraform/    # AWS infrastructure and deployment guide
+└── aws-three-tier-architecture.png
 ```
 
-## Local Setup
+## Deploy to AWS
 
-### Prerequisites
+Follow [the PowerShell deployment guide](infrastructure/terraform/DEPLOYMENT.md). It covers AWS credentials, Terraform commands, app releases, checking the site, and destroying the demo stack.
 
-- Web server with PHP support (XAMPP, WAMP, MAMP, etc.)
-- MySQL database
+## Run locally
 
-### Steps
+Install XAMPP, start Apache and MySQL from the XAMPP Control Panel, and import `database/database_setup.sql` using phpMyAdmin. In PowerShell, run the following from the project root (change the XAMPP path if needed):
 
-1. Create VPC
-2. Create subnets
-    1. Web Public 1a, 1b, 1c
-    2. Web Private 1a, 1b, 1c
-    3. App Private 1a, 1b, 1c
-    4. Db Private 1a, 1b, 1c
-3. Create route tables
-    1. Web Public
-    2. Web Private 1a, 1b, 1c
-    3. App Private 1a, 1b, 1c
-    4. Db Private 1a, 1b, 1c
-4. Associate route tables with subnet
-5. Create internet Gateway (IGW)
-    1. Attach it to VPC
-6. Create NAT gateway (NATGW) in web public subnet
-7. Add IGW and NAT routes in route table
-    1. Public -> IGW
-    2. Private -> NAT
-8. Create security groups
-    1. Frontend ALB
-    2. Frontend Servers
-    3. Backend ALB
-    4. Backend Servers
-    5. Db Private Servers
-9. Create database subnet group
-10. Create database server
-11. Create Frontend ALB
-    1. Create Frontend ALB target group 
-12. Create Backend ALB
-    1. Create Backend ALB target group
-13. Create Frontend Server AMI
-    1. Install Nginx
-    2. Install Git
-14. Create Backend Server AMI
-    1. Install PHP, MySQL, Apache
-    2. Install Git
-    3. Run the database script
-15. Create the Launch Template for Frontend Server
-16. Create the Launch Template for Backend Server
-17. Create the Auto Scaling Group for Frontend Server
-18. Create the Auto Scaling Group for Backend Server
+```powershell
+$projectRoot = (Get-Location).Path
+$webRoot = "C:\xampp\htdocs\campus-helpdesk"
+New-Item -ItemType Directory -Force "$webRoot\api" | Out-Null
+Copy-Item "$projectRoot\frontend\*" $webRoot -Recurse -Force
+Copy-Item "$projectRoot\backend\api\*" "$webRoot\api" -Recurse -Force
+```
 
-## Development
+Create `$webRoot\.htaccess` with the local MySQL settings. The default XAMPP MySQL `root` account often has an empty password; use the password configured on your computer:
 
-### Frontend Development
+```powershell
+@'
+SetEnv DB_HOST 127.0.0.1
+SetEnv DB_NAME hello_world
+SetEnv DB_USER root
+SetEnv DB_PASSWORD
+'@ | Set-Content "$webRoot\.htaccess"
+```
 
-The frontend is built with plain HTML, CSS, and JavaScript. It uses the Fetch API to communicate with the backend.
+Open `http://localhost/campus-helpdesk/` in a browser. For help answering basic project questions, read the [interview guide](docs/INTERVIEW_GUIDE.md).
 
-To make changes to the frontend:
-1. Modify the HTML/CSS/JavaScript files in the `frontend` directory
-2. Test the changes locally
+The starter configuration runs one `t3.micro` instance in each EC2 tier to fit a small account quota. RDS is Multi-AZ, but the EC2 tiers do not have instance-level failover at this capacity. The stack creates billable resources, including NAT Gateway, load balancers, EC2 instances, and RDS. Run `terraform destroy` when you finish practicing.
 
-### Backend Development
+## How to describe it on a resume
 
-The PHP backend provides simple API endpoints for retrieving and saving messages.
+**Three-Tier Architecture on AWS | Student Portfolio Project**
 
-To make changes to the backend:
-1. Modify the PHP files in the `backend/api` directory
-2. Test the changes locally
+Designed and deployed a PHP and MySQL help desk demo on AWS using Terraform. Separated the public entry point, frontend, backend, and database into controlled network tiers; used Application Load Balancers, EC2 Auto Scaling groups, private Multi-AZ RDS, security groups, and Secrets Manager.
 
-## Security Considerations
-
-This is a demo application and lacks several security features that would be necessary in a production environment:
-
-- Input validation and sanitization
-- Authentication and authorization
-- HTTPS encryption
-- Protection against SQL injection (although PDO with prepared statements is used)
-- CORS configuration
-
-## License
-
-This project is released under the MIT License.
-
-## Acknowledgements
-
-This sample application was created as a demonstration of AWS three-tier architecture principles.
+Use only the services and details you can explain. The [interview guide](docs/INTERVIEW_GUIDE.md) has short explanations and honest limitations for this learning deployment.

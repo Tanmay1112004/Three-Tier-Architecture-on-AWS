@@ -1,0 +1,55 @@
+#!/bin/bash
+# Application release: ${app_release}
+set -euo pipefail
+dnf install -y httpd php php-fpm php-mysqlnd git mariadb105 jq
+git clone --depth 1 '${app_repo_url}' /tmp/app
+install -d -o root -g apache -m 0750 /etc/hello-world
+SECRET="$(aws secretsmanager get-secret-value --secret-id '${secret_arn}' --query SecretString --output text --region '${aws_region}' 2>/dev/null || true)"
+for attempt in $(seq 1 30); do
+  if [ -n "$SECRET" ]; then break; fi
+  sleep 10
+  SECRET="$(aws secretsmanager get-secret-value --secret-id '${secret_arn}' --query SecretString --output text --region '${aws_region}' 2>/dev/null || true)"
+done
+if [ -z "$SECRET" ]; then echo 'Unable to retrieve database secret' >&2; exit 1; fi
+DB_USER="$(printf '%s' "$SECRET" | jq -r .username)"
+DB_PASSWORD="$(printf '%s' "$SECRET" | jq -r .password)"
+cat > /etc/hello-world/db.env <<EOF
+DB_HOST='${db_host}'
+DB_NAME='hello_world'
+DB_USER='$${DB_USER}'
+DB_PASSWORD='$${DB_PASSWORD}'
+EOF
+chown root:apache /etc/hello-world/db.env
+chmod 0640 /etc/hello-world/db.env
+install -d -o apache -g apache -m 0755 /var/www/html/api
+cp -a /tmp/app/backend/api/. /var/www/html/api/
+cat > /var/www/html/api/db_connection.php <<'PHP'
+<?php
+function getDatabaseConnection(): PDO {
+    $config = parse_ini_file('/etc/hello-world/db.env');
+    $host = $config['DB_HOST'] ?? null;
+    $db_name = $config['DB_NAME'] ?? 'hello_world';
+    $username = $config['DB_USER'] ?? null;
+    $password = $config['DB_PASSWORD'] ?? null;
+
+    if (!$host || !$username || !$password) {
+        throw new RuntimeException('Database configuration is missing');
+    }
+
+    $dsn = "mysql:host=$host;dbname=$db_name;charset=utf8mb4";
+    $options = [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+    ];
+
+    return new PDO($dsn, $username, $password, $options);
+}
+PHP
+cp /tmp/app/database/database_setup.sql /tmp/database_setup.sql
+for attempt in $(seq 1 60); do
+  if mariadb -h '${db_host}' -u "$DB_USER" -p"$DB_PASSWORD" -e 'SELECT 1' >/dev/null 2>&1; then break; fi
+  sleep 10
+done
+mariadb -h '${db_host}' -u "$DB_USER" -p"$DB_PASSWORD" < /tmp/database_setup.sql
+systemctl enable --now php-fpm httpd

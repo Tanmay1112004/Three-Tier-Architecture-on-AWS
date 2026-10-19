@@ -1,0 +1,9 @@
+aws_region = "us-east-1"
+
+# Change this when using your own application repository.
+app_repo_url = "https://github.com/ajitinamdar-tech/three-tier-architecture-aws.git"
+app_release  = "v1"
+
+# Set a unique value if you deploy more than one copy in the same AWS account.
+project_name = "hello-world-three-tier"
+environment  = "demo"

@@ -1,99 +1,86 @@
-<!-- index.html -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tech with Ajit</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A simple campus help desk request board deployed on AWS.">
+    <title>Campus Help Desk | Three-Tier Architecture on AWS</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Tech with Ajit</h1>
-        <p>Basic Three-Tier Architecture Example</p>
-        
-        <div class="message-container">
-            <h2>Message from Database:</h2>
-            <div id="message-box">Loading...</div>
+    <header class="site-header">
+        <div class="header-inner">
+            <a class="brand" href="/" aria-label="Campus Help Desk home">
+                <span class="brand-mark" aria-hidden="true">C</span>
+                <span>Campus Help Desk</span>
+            </a>
+            <span class="environment-label">AWS three-tier demo</span>
         </div>
-        
-        <div class="form-container">
-            <h2>Add New Message</h2>
-            <form id="message-form">
-                <div class="form-group">
-                    <label for="message">New Message:</label>
-                    <input type="text" id="message" name="message" required>
-                </div>
-                <button type="submit">Save Message</button>
-            </form>
-        </div>
-    </div>
+    </header>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Load messages on page load
-            fetchMessages();
-            
-            // Handle form submission
-            const form = document.getElementById('message-form');
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const message = document.getElementById('message').value;
-                
-                // Send message to backend
-                fetch('api/save_message.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'message=' + encodeURIComponent(message)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Clear form and reload messages
-                        document.getElementById('message').value = '';
-                        fetchMessages();
-                    } else {
-                        alert('Error saving message: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while saving the message');
-                });
-            });
-        });
-        
-        function fetchMessages() {
-            const messageBox = document.getElementById('message-box');
-            messageBox.textContent = 'Loading...';
-            
-            // Fetch messages from backend
-            fetch('api/get_messages.php')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Display messages
-                        if (data.messages.length === 0) {
-                            messageBox.innerHTML = '<p class="no-messages">No messages found</p>';
-                        } else {
-                            let html = '<ul>';
-                            data.messages.forEach(msg => {
-                                html += `<li>${msg.message} <span class="timestamp">(${msg.created_at})</span></li>`;
-                            });
-                            html += '</ul>';
-                            messageBox.innerHTML = html;
-                        }
-                    } else {
-                        messageBox.innerHTML = '<p class="error">Error: ' + data.error + '</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    messageBox.innerHTML = '<p class="error">Failed to load messages</p>';
-                });
-        }
-    </script>
+    <main class="page-shell">
+        <section class="intro">
+            <p class="eyebrow">STUDENT SUPPORT</p>
+            <h1>How can we help?</h1>
+            <p class="intro-copy">Submit a campus support request and follow the latest requests below.</p>
+        </section>
+
+        <section class="content-grid" aria-label="Campus support requests">
+            <section class="panel form-panel" aria-labelledby="form-heading">
+                <div class="panel-heading">
+                    <span class="step-number" aria-hidden="true">01</span>
+                    <div>
+                        <h2 id="form-heading">New request</h2>
+                        <p>Tell us what you need help with.</p>
+                    </div>
+                </div>
+                <form id="request-form">
+                    <label for="title">Request title</label>
+                    <input id="title" name="title" type="text" maxlength="120" placeholder="For example, Wi-Fi in the library" required>
+
+                    <label for="category">Category</label>
+                    <select id="category" name="category" required>
+                        <option value="Technology">Technology</option>
+                        <option value="Facilities">Facilities</option>
+                        <option value="Student Services">Student Services</option>
+                        <option value="Other">Other</option>
+                    </select>
+
+                    <label for="description">Details</label>
+                    <textarea id="description" name="description" rows="5" maxlength="1000" placeholder="Share a few details so the right team can help." required></textarea>
+
+                    <p class="privacy-note">Demo project: please do not enter personal or confidential information.</p>
+                    <button id="submit-button" type="submit">Submit request <span aria-hidden="true">→</span></button>
+                    <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
+                </form>
+            </section>
+
+            <section class="panel requests-panel" aria-labelledby="requests-heading">
+                <div class="panel-heading requests-heading">
+                    <span class="step-number" aria-hidden="true">02</span>
+                    <div>
+                        <h2 id="requests-heading">Recent requests</h2>
+                        <p>Latest items submitted to the help desk.</p>
+                    </div>
+                    <button id="refresh-button" class="refresh-button" type="button" aria-label="Refresh requests">↻</button>
+                </div>
+                <div id="request-list" class="request-list" aria-live="polite">
+                    <p class="empty-state">Loading requests…</p>
+                </div>
+                <p class="list-note">Showing up to 20 recent requests.</p>
+            </section>
+        </section>
+
+        <section class="architecture-note" aria-label="About this project">
+            <div class="architecture-icon" aria-hidden="true">☁</div>
+            <p><strong>Built as a learning project.</strong> The page is served by Nginx, requests go through a private PHP API, and the data is stored in Amazon RDS.</p>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>Three-Tier Architecture on AWS <span aria-hidden="true">·</span> Student portfolio project</p>
+    </footer>
+
+    <script src="app.js" defer></script>
 </body>
 </html>
