@@ -24,19 +24,26 @@ This project demonstrates practical knowledge of AWS infrastructure, cloud netwo
 
 <!-- Replace with your actual dashboard screenshot -->
 
-![Campus Help Desk Portal Dashboard](screenshots/app-dashboard.png)
+![Campus Help Desk Portal Dashboard](https://github.com/Tanmay1112004/Three-Tier-Architecture-on-AWS/blob/main/screenshots/Screenshot%202026-10-19%20192433.png)
 
 ### Submit a Support Request
 
 <!-- Replace with your actual form screenshot -->
 
-![Submit a Support Request](screenshots/submit-request.png)
+![Submit a Support Request](https://github.com/Tanmay1112004/Three-Tier-Architecture-on-AWS/blob/main/screenshots/Screenshot%202026-10-19%20192501.png)
 
-### Recent Support Requests
+### Project Setup
 
 <!-- Replace with your actual requests screenshot -->
 
-![Recent Support Requests](screenshots/recent-requests.png)
+![Project setup](https://github.com/Tanmay1112004/Three-Tier-Architecture-on-AWS/blob/main/screenshots/Screenshot%202026-10-19%20191933.png)
+
+![Project setup](https://github.com/Tanmay1112004/Three-Tier-Architecture-on-AWS/blob/main/screenshots/Screenshot%202026-10-19%20192008.png)
+
+![Project setup](https://github.com/Tanmay1112004/Three-Tier-Architecture-on-AWS/blob/main/screenshots/Screenshot%202026-10-19%20192030.png)
+
+![Project setup](https://github.com/Tanmay1112004/Three-Tier-Architecture-on-AWS/blob/main/screenshots/Screenshot%202026-10-19%20192416.png)
+
 
 ### AWS Three-Tier Architecture
 
