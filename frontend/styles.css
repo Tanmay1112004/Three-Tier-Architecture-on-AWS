@@ -127,9 +127,11 @@ button { cursor: pointer; }
 #submit-button:hover { background: var(--blue-dark); }
 #submit-button:disabled { cursor: wait; opacity: .65; }
 .form-status { min-height: 1.3em; margin: 2px 0 0; color: var(--mint-ink); font-size: .88rem; }
+.form-status.is-error { color: #a34242; }
 
 .requests-heading { align-items: center; }
 .requests-heading > div { flex: 1; }
+.request-count { padding: 5px 10px; color: #42617f; background: #eef4fa; border-radius: 999px; font-size: .72rem; font-weight: 700; white-space: nowrap; }
 .refresh-button {
     width: 35px;
     height: 35px;
@@ -138,9 +140,15 @@ button { cursor: pointer; }
     border: 1px solid #e4edf7;
     border-radius: 8px;
     font-size: 1.25rem;
+    transition: background .2s ease, transform .2s ease;
 }
+.refresh-button:hover:not(:disabled) { background: #e4eef9; transform: rotate(-12deg); }
+.refresh-button:disabled { cursor: wait; }
+.refresh-button.is-loading { animation: refresh-turn .8s linear infinite; }
+@keyframes refresh-turn { to { transform: rotate(360deg); } }
 .request-list { display: grid; gap: 12px; }
-.request-card { padding: 16px; border: 1px solid var(--line); border-radius: 11px; }
+.request-card { padding: 16px; border: 1px solid var(--line); border-radius: 11px; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+.request-card:hover { border-color: #cbd9e8; box-shadow: 0 8px 20px rgb(31 42 55 / 5%); transform: translateY(-2px); }
 .request-top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .category-tag, .status-tag { display: inline-flex; padding: 4px 9px; border-radius: 999px; font-size: .72rem; font-weight: 700; }
 .category-tag { color: #405e7c; background: #edf3f8; }

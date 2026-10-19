@@ -2,9 +2,13 @@ const requestList = document.getElementById('request-list');
 const requestForm = document.getElementById('request-form');
 const formStatus = document.getElementById('form-status');
 const submitButton = document.getElementById('submit-button');
+const requestCount = document.getElementById('request-count');
+const refreshButton = document.getElementById('refresh-button');
 
 async function loadRequests() {
     requestList.replaceChildren(makeMessage('Loading requests…'));
+    refreshButton.disabled = true;
+    refreshButton.classList.add('is-loading');
 
     try {
         const response = await fetch('/api/get_requests.php');
@@ -15,15 +19,21 @@ async function loadRequests() {
         }
 
         if (result.requests.length === 0) {
+            requestCount.textContent = '0 requests';
             requestList.replaceChildren(makeMessage('No requests yet. Submit the first one.'));
             return;
         }
 
+        requestCount.textContent = `${result.requests.length} ${result.requests.length === 1 ? 'request' : 'requests'}`;
         const cards = result.requests.map(makeRequestCard);
         requestList.replaceChildren(...cards);
     } catch (error) {
+        requestCount.textContent = 'Unavailable';
         requestList.replaceChildren(makeMessage('Requests are temporarily unavailable. Please refresh in a moment.', 'error-state'));
         console.error(error);
+    } finally {
+        refreshButton.disabled = false;
+        refreshButton.classList.remove('is-loading');
     }
 }
 
@@ -78,6 +88,7 @@ function formatDate(value) {
 requestForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     formStatus.textContent = '';
+    formStatus.classList.remove('is-error');
     submitButton.disabled = true;
     submitButton.textContent = 'Submitting…';
 
@@ -101,6 +112,7 @@ requestForm.addEventListener('submit', async (event) => {
         await loadRequests();
     } catch (error) {
         formStatus.textContent = error.message || 'Request submission failed. Please try again.';
+        formStatus.classList.add('is-error');
         console.error(error);
     } finally {
         submitButton.disabled = false;
@@ -108,5 +120,5 @@ requestForm.addEventListener('submit', async (event) => {
     }
 });
 
-document.getElementById('refresh-button').addEventListener('click', loadRequests);
+refreshButton.addEventListener('click', loadRequests);
 loadRequests();
