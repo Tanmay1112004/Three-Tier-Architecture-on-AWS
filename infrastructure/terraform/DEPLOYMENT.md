@@ -41,14 +41,14 @@ if (-not (Test-Path .\terraform.tfvars)) {
 }
 ```
 
-Open `terraform.tfvars`. Confirm the repository URL and set a new `app_release` label, such as `v2`. Changing that label creates a new launch-template version and refreshes the EC2 instances so they download the published app files.
+Open `terraform.tfvars`. Confirm the repository URL and set `app_release` to a new value, such as `v3`. Changing that label creates a new launch-template version and refreshes both EC2 tiers so they download the published app files.
 
 ```hcl
 aws_region = "us-east-1"
 project_name = "hello-world-three-tier"
 environment = "demo"
 app_repo_url = "https://github.com/Tanmay1112004/Three-Tier-Architecture-on-AWS.git"
-app_release = "v2"
+app_release = "v3"
 ```
 
 The existing RDS database name remains `hello_world`, so this app update does not request database replacement. The SQL setup adds a `service_requests` table and sample rows without deleting the existing `messages` table.
